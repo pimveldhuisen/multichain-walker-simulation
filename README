@@ -1,0 +1,3 @@
+A stand-alone simulation framework intended to test different concepts for walking the multichain.
+
+Should be run in a directory of which the parent also contains the tribler repo.
