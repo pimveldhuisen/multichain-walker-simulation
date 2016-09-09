@@ -1,3 +1,3 @@
 from simulation import Simulation
 
-Simulation(600).start()
+Simulation(60000).start()
