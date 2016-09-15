@@ -1,3 +1,3 @@
 from simulation import Simulation
 
-Simulation(60000).start()
+Simulation(360000, "nodes/results.dat").start()
