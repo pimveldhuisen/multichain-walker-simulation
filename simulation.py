@@ -1,18 +1,20 @@
 from database import Database
 from node import Node
 import random
-
+import base64
 
 class Simulation:
-    def __init__(self, max_time):
+    def __init__(self, max_time, log_file):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
         self.event_queue = []
         self.time = 0
+        self.log_file = log_file
 
     def add_event(self, delta_time, function, arguments=[]):
-        event = [self.time + delta_time, function] + arguments
+        time = self.time + delta_time
+        event = [time, function] + arguments
         self.event_queue.append(event)
         self.event_queue.sort(key=lambda x: x[0])
 
@@ -20,17 +22,25 @@ class Simulation:
     def connection_delay():
         return random.randint(100, 500)
 
+    @staticmethod
+    def initialisation_delay():
+        return random.randint(0, 5000)
+
     def start(self):
         print "Reading multichain database.."
         database = Database("multichain.db")
-        ids = database.get_identities()
-        for i in range(len(ids)):
-            node = Node(i+1, self)
-            node.set_blocks(database.get_blocks(ids[i]))
+        public_keys = database.get_identities()
+        for public_key in public_keys:
+            node = Node(public_key, self)
+            node.add_blocks(database.get_blocks(public_key))
             node.live_edges.append(self.bootstrap)
             node.send_identity(self.bootstrap)
             self.nodes.append(node)
-            self.add_event(Simulation.connection_delay(), node.take_walk_step)
+            self.add_event(Simulation.initialisation_delay(), node.take_walk_step)
+
+        print "Scheduling data gathering.."
+        for time in range(0, self.max_time, 1000):
+            self.add_event(time, self.log_data)
 
         print "Starting simulation.."
         while self.event_queue:
@@ -45,3 +55,12 @@ class Simulation:
 
         print "No more events"
         return
+
+    def log_data(self):
+        with open(self.log_file, 'a') as f:
+            f.write(str(self.time) + " ")
+        for node in self.nodes:
+            if node.public_key is not 0:
+                node.log_data(self.log_file)
+        with open(self.log_file, 'a') as f:
+            f.write("\n")
