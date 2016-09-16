@@ -10,4 +10,4 @@ averages = np.average(values, axis=1)
 
 plt.clf()
 plt.boxplot(values.transpose(), showmeans=True, showfliers=False)
-plt.show()
+plt.savefig('blocks.png')
