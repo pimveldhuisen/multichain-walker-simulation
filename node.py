@@ -6,7 +6,7 @@ from database import Database
 
 
 class Node:
-    def __init__(self, public_key, simulation):
+    def __init__(self, public_key, simulation, nat=False):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -15,9 +15,19 @@ class Node:
             os.makedirs(self.node_directory)
         self.block_database = Database(self.node_directory + "/multichain.db")
         self.log = open(self.node_directory + "/log.txt", 'w')
+        self.nat = nat
+
+    def receive_message(self, sender, message):
+        message['function'](*message['arguments'])
+
+    def send_message(self, target, message):
+        self.simulation.send_message(self, target, message)
 
     def send_identity(self, target):
-        self.simulation.add_event(self.simulation.connection_delay(), target.receive_identity, [self])
+        message = dict()
+        message['function'] = target.receive_identity
+        message['arguments'] = [self]
+        self.send_message(target, message)
 
     def receive_identity(self, sender):
         self.live_edges.append(sender)
@@ -34,7 +44,10 @@ class Node:
         self.simulation.add_event(5000, self.take_walk_step)
 
     def send_introduction_request(self, target):
-        self.simulation.add_event(self.simulation.connection_delay(), target.receive_introduction_request, [self])
+        message = dict()
+        message['function'] = target.receive_introduction_request
+        message['arguments'] = [self]
+        self.send_message(target, message)
 
     def receive_introduction_request(self, sender):
         self.send_introduction_response(sender)
@@ -43,7 +56,10 @@ class Node:
         if self.live_edges:
             peer = random.choice(self.live_edges)
             #TODO: while peer eligble to walk
-            self.simulation.add_event(self.simulation.connection_delay(), target.receive_introduction_response, [peer])
+            message = dict()
+            message['function'] = target.receive_introduction_response
+            message['arguments'] = [peer]
+            self.send_message(target, message)
         else:
             print "I have no live edges"
 
@@ -57,7 +73,10 @@ class Node:
         print "I have " + str(len(self.live_edges)) + " live_edges"
 
     def send_crawl_request(self, target):
-        self.simulation.add_event(self.simulation.connection_delay(), target.receive_crawl_request, [self])
+        message = dict()
+        message['function'] = target.receive_crawl_request
+        message['arguments'] = [self]
+        self.send_message(target, message)
 
     def receive_crawl_request(self, sender):
         if self.public_key is not 0:
@@ -65,7 +84,10 @@ class Node:
 
     def send_crawl_response(self, target):
         blocks = self.block_database.get_blocks(self.public_key)
-        self.simulation.add_event(self.simulation.connection_delay(), target.receive_crawl_response, [blocks])
+        message = dict()
+        message['function'] = target.receive_crawl_response
+        message['arguments'] = [blocks]
+        self.send_message(target, message)
 
     def receive_crawl_response(self, blocks):
         self.add_blocks(blocks)
