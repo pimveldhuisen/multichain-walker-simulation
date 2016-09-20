@@ -1,16 +1,17 @@
 from database import Database
 from node import Node
 import random
-import base64
+
 
 class Simulation:
-    def __init__(self, max_time, log_file):
+    def __init__(self, max_time, log_file, verbose):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
         self.event_queue = []
         self.time = 0
         self.log_file = log_file
+        self.verbose = verbose
 
     def add_event(self, delta_time, function, arguments=[]):
         time = self.time + delta_time
@@ -47,7 +48,11 @@ class Simulation:
             if self.time < self.max_time:
                 event = self.event_queue.pop(0)
                 self.time = event[0]
-                print "Time: " + str(self.time) + " | " + str(event[1:])
+                if self.verbose:
+                    print "Time: " + str(self.time) + " | " + str(event[1:])
+                else:
+                    if self.time % 1000 == 0:
+                        print self.time
                 event[1](*event[2:])
             else:
                 print "Time limit reached"
@@ -64,3 +69,7 @@ class Simulation:
                 node.log_data(self.log_file)
         with open(self.log_file, 'a') as f:
             f.write("\n")
+
+    def send_message(self, sender, target, message):
+        self.add_event(Simulation.connection_delay(), target.receive_message, [sender, message])
+
