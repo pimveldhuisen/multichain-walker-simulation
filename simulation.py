@@ -4,7 +4,7 @@ import random
 
 
 class Simulation:
-    def __init__(self, max_time, log_file, verbose):
+    def __init__(self, max_time, log_file, verbose, nat_percentage):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
@@ -12,6 +12,9 @@ class Simulation:
         self.time = 0
         self.log_file = log_file
         self.verbose = verbose
+        assert nat_percentage < 100
+        assert nat_percentage >= 0
+        self.nat_percentage = nat_percentage
 
     def add_event(self, delta_time, function, arguments=[]):
         time = self.time + delta_time
@@ -32,8 +35,17 @@ class Simulation:
         database = Database("multichain.db")
         public_keys = database.get_identities()
         for public_key in public_keys:
-            node = Node(public_key, self)
-            node.add_blocks(database.get_blocks(public_key))
+            blocks = database.get_blocks(public_key)
+            if len(blocks) > 1500:
+                #TODO
+                #For nodes with more than 1500 blocks, we assume these are our nodes,
+                # of which we know they are not NAT'ed. This value is picked from the dataset,
+                # and should probably be determined better in the future
+                nat = False
+            else:
+                nat = random.randint(0, 100) < self.nat_percentage
+            node = Node(public_key, self, nat)
+            node.add_blocks(blocks)
             node.live_edges.append(self.bootstrap)
             node.send_identity(self.bootstrap)
             self.nodes.append(node)

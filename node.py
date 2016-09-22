@@ -6,6 +6,12 @@ from database import Database
 
 
 class Node:
+
+    NAT_TIMEOUT = 60000     # Time before the NAT will close a hole
+    NAT_TIMEOUT_WITH_MARGIN = 57500     # Maximum Time after puncturing a NAT at which we assume
+    # a message can still reach the target before the hole closes (ms)
+    WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
+
     def __init__(self, public_key, simulation, nat=False):
         self.public_key = public_key
         self.simulation = simulation
@@ -16,12 +22,23 @@ class Node:
         self.block_database = Database(self.node_directory + "/multichain.db")
         self.log = open(self.node_directory + "/log.txt", 'w')
         self.nat = nat
+        self.nat_openings = []
 
 
     def receive_message(self, sender, message):
-        message['function'](*message['arguments'])
+        if self.nat and sender not in self.nat_openings:
+            # NAT blocks us from receiving this message
+            return
+        else:
+            message['function'](*message['arguments'])
 
     def send_message(self, target, message):
+        if self.nat:
+            # We've punctured our NAT
+            self.nat_openings.append(target)
+            # But this puncture will eventually timeout
+            self.simulation.add_event(self.NAT_TIMEOUT, self.nat_openings.remove, [target])
+
         self.simulation.send_message(self, target, message)
 
     def add_live_edge(self, peer):
@@ -46,7 +63,7 @@ class Node:
         if self.live_edges:
             peer = random.choice(self.live_edges)
             self.send_introduction_request(peer)
-        self.simulation.add_event(5000, self.take_walk_step)
+        self.simulation.add_event(self.WALK_STEP_TIME, self.take_walk_step)
 
     def send_introduction_request(self, target):
         message = dict()
@@ -71,7 +88,7 @@ class Node:
 
     def receive_introduction_response(self, peer):
         self.live_edges.append(peer)
-        self.simulation.add_event(57500, self.live_edge_timeout, [peer])
+        self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
         self.send_crawl_request(peer)
 
     def live_edge_timeout(self, peer):
