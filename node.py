@@ -24,7 +24,6 @@ class Node:
         self.nat = nat
         self.nat_openings = []
 
-
     def receive_message(self, sender, message):
         if self.nat and sender not in self.nat_openings:
             # NAT blocks us from receiving this message
@@ -44,6 +43,11 @@ class Node:
     def add_live_edge(self, peer):
         self.live_edges.append(peer)
         self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
+
+    def live_edge_timeout(self, peer):
+        self.live_edges.remove(peer)
+        if self.simulation.verbose:
+            print "I have " + str(len(self.live_edges)) + " live_edges"
 
     def send_identity(self, target):
         message = dict()
@@ -79,6 +83,10 @@ class Node:
         if self.live_edges:
             peer = random.choice(self.live_edges)
             #TODO: while peer eligble to walk
+
+            # Send a puncture request to the peer that will be introduced:
+            self.send_puncture_request(peer, target)
+            # Send the introduction response to the originator of the introduction request:
             message = dict()
             message['function'] = target.receive_introduction_response
             message['arguments'] = [peer]
@@ -87,13 +95,7 @@ class Node:
             print "I have no live edges"
 
     def receive_introduction_response(self, peer):
-        self.live_edges.append(peer)
-        self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
-        self.send_crawl_request(peer)
-
-    def live_edge_timeout(self, peer):
-        self.live_edges.remove(peer)
-        print "I have " + str(len(self.live_edges)) + " live_edges"
+        self.add_live_edge(peer)
 
     def send_crawl_request(self, target):
         message = dict()
@@ -114,6 +116,28 @@ class Node:
 
     def receive_crawl_response(self, blocks):
         self.add_blocks(blocks)
+
+    def send_puncture(self, target):
+        message = dict()
+        message['function'] = target.receive_puncture
+        message['arguments'] = [self]
+        self.send_message(target, message)
+
+    def receive_puncture(self, sender):
+        self.send_crawl_request(sender)
+
+    def send_puncture_request(self, target, peer):
+        """
+        :param target: the node that should receive the puncture_request
+        :param peer: the node that the target should punch a hole towards
+        """
+        message = dict()
+        message['function'] = target.receive_puncture_request
+        message['arguments'] = [peer]
+        self.send_message(target, message)
+
+    def receive_puncture_request(self, peer):
+        self.send_puncture(peer)
 
     def log_data(self, datafile):
         with open(datafile, 'a') as f:
