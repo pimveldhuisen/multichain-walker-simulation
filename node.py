@@ -17,11 +17,16 @@ class Node:
         self.log = open(self.node_directory + "/log.txt", 'w')
         self.nat = nat
 
+
     def receive_message(self, sender, message):
         message['function'](*message['arguments'])
 
     def send_message(self, target, message):
         self.simulation.send_message(self, target, message)
+
+    def add_live_edge(self, peer):
+        self.live_edges.append(peer)
+        self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
 
     def send_identity(self, target):
         message = dict()
@@ -50,6 +55,7 @@ class Node:
         self.send_message(target, message)
 
     def receive_introduction_request(self, sender):
+        self.add_live_edge(sender)  # This is know in dispersy as a stumble candidate
         self.send_introduction_response(sender)
 
     def send_introduction_response(self, target):
