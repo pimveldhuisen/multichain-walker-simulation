@@ -12,7 +12,7 @@ class Node:
     # a message can still reach the target before the hole closes (ms)
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
 
-    def __init__(self, public_key, simulation, nat=False):
+    def __init__(self, public_key, simulation, datafile, nat=False):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -23,6 +23,7 @@ class Node:
         self.log = open(self.node_directory + "/log.txt", 'w')
         self.nat = nat
         self.nat_openings = []
+        self.datafile = open(datafile, 'a')
 
     def receive_message(self, sender, message):
         if self.nat and sender not in self.nat_openings:
@@ -139,9 +140,6 @@ class Node:
     def receive_puncture_request(self, peer):
         self.send_puncture(peer)
 
-    def log_data(self, datafile):
-        with open(datafile, 'a') as f:
-            f.write(str(self.block_database.get_number_of_blocks_in_db()) + " ")
 
 
 

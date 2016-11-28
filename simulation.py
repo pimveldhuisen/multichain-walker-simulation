@@ -1,20 +1,24 @@
 from database import Database
 from node import Node
+from logger import Logger
 import random
 
 
 class Simulation:
     def __init__(self, max_time, log_file, verbose, nat_percentage):
         self.max_time = max_time
-        self.bootstrap = Node(0, self)
-        self.nodes = []
-        self.event_queue = []
-        self.time = 0
-        self.log_file = log_file
+        self.logger = Logger(log_file)
+        self.log_file_name = log_file
+        self.log_file = open(self.log_file_name, 'a')
         self.verbose = verbose
         assert nat_percentage < 100
         assert nat_percentage >= 0
         self.nat_percentage = nat_percentage
+
+        self.bootstrap = Node(0, self, self.log_file_name)
+        self.nodes = []
+        self.event_queue = []
+        self.time = 0
 
     def add_event(self, delta_time, function, arguments=[]):
         time = self.time + delta_time
@@ -44,7 +48,7 @@ class Simulation:
                 nat = False
             else:
                 nat = random.randint(0, 100) < self.nat_percentage
-            node = Node(public_key, self, nat)
+            node = Node(public_key, self, self.log_file_name, nat)
             node.add_blocks(blocks)
             node.live_edges.append(self.bootstrap)
             node.send_identity(self.bootstrap)
@@ -74,13 +78,11 @@ class Simulation:
         return
 
     def log_data(self):
-        with open(self.log_file, 'a') as f:
-            f.write(str(self.time) + " ")
+        self.logger.log(str(self.time) + " ")
         for node in self.nodes:
             if node.public_key is not 0:
-                node.log_data(self.log_file)
-        with open(self.log_file, 'a') as f:
-            f.write("\n")
+                self.logger.log(str(node.block_database.get_number_of_blocks_in_db()) + " ")
+        self.logger.log("\n")
 
     def send_message(self, sender, target, message):
         self.add_event(Simulation.connection_delay(), target.receive_message, [sender, message])
