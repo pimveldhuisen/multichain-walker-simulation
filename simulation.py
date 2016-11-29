@@ -40,7 +40,7 @@ class Simulation:
             self.add_event(Simulation.initialisation_delay(), node.take_walk_step)
 
         print "Scheduling data gathering.."
-        for time in range(0, self.max_time, 1000):
+        for time in range(0, self.max_time, 60000):
             self.add_event(time, self.log_data)
 
         print "Starting simulation.."
