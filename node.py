@@ -6,6 +6,12 @@ from database import Database
 
 
 class Node:
+
+    NAT_TIMEOUT = 60000     # Time before the NAT will close a hole
+    NAT_TIMEOUT_WITH_MARGIN = 57500     # Maximum Time after puncturing a NAT at which we assume
+    # a message can still reach the target before the hole closes (ms)
+    WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
+
     def __init__(self, public_key, simulation, nat=False):
         self.public_key = public_key
         self.simulation = simulation
