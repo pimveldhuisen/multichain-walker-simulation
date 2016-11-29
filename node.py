@@ -82,7 +82,6 @@ class Node:
 
     def live_edge_timeout(self, peer):
         self.live_edges.remove(peer)
-        print "I have " + str(len(self.live_edges)) + " live_edges"
 
     def send_crawl_request(self, target):
         message = dict()
