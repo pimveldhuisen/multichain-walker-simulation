@@ -12,7 +12,7 @@ class Node:
     # a message can still reach the target before the hole closes (ms)
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
 
-    def __init__(self, public_key, simulation, nat=False):
+    def __init__(self, public_key, simulation):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -21,7 +21,6 @@ class Node:
             os.makedirs(self.node_directory)
         self.block_database = Database(self.node_directory + "/multichain.db")
         self.log = open(self.node_directory + "/log.txt", 'w')
-        self.nat = nat
 
 
     def receive_message(self, sender, message):
