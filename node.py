@@ -26,8 +26,12 @@ class Node:
         elif walker_type == 'state-less directed':
             self.walk_function = self.walk_stateless_directed
         elif walker_type == 'state-full undirected':
+            self.teleport_probability = 0.5
+            self.current_walk = None
             self.walk_function = self.walk_statefull_undirected
         elif walker_type == 'state-full directed':
+            self.teleport_probability = 0.5
+            self.current_walk = None
             self.walk_function = self.walk_statefull_directed
         elif walker_type is None:
             self.walk_function = None
@@ -71,7 +75,16 @@ class Node:
         raise NotImplementedError
 
     def walk_statefull_undirected(self):
-        raise NotImplementedError
+        if self.current_walk:
+            if random.random() <= self.teleport_probability:
+                self.current_walk = random.choice(self.live_edges)
+            else:
+                self.current_walk = self.live_edges[-1]
+        else:
+            # Start walking
+            self.current_walk = random.choice(self.live_edges)
+
+        self.send_introduction_request(self.current_walk)
 
     def walk_statefull_directed(self):
         raise NotImplementedError
