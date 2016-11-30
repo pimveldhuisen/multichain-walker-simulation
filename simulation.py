@@ -4,7 +4,7 @@ import random
 
 
 class Simulation:
-    def __init__(self, max_time, log_file, verbose):
+    def __init__(self, max_time, log_file, verbose, walker_type):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
@@ -12,6 +12,7 @@ class Simulation:
         self.time = 0
         self.log_file = log_file
         self.verbose = verbose
+        self.walker_type = walker_type
 
     def add_event(self, delta_time, function, arguments=[]):
         time = self.time + delta_time
@@ -32,7 +33,7 @@ class Simulation:
         database = Database("multichain.db")
         public_keys = database.get_identities()
         for public_key in public_keys:
-            node = Node(public_key, self)
+            node = Node(public_key, self, self.walker_type)
             node.add_blocks(database.get_blocks(public_key))
             node.live_edges.append(self.bootstrap)
             node.send_identity(self.bootstrap)

@@ -6,13 +6,12 @@ from database import Database
 
 
 class Node:
-
     NAT_TIMEOUT = 60000     # Time before the NAT will close a hole
     NAT_TIMEOUT_WITH_MARGIN = 57500     # Maximum Time after puncturing a NAT at which we assume
     # a message can still reach the target before the hole closes (ms)
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
 
-    def __init__(self, public_key, simulation):
+    def __init__(self, public_key, simulation, walker_type=None):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -22,6 +21,18 @@ class Node:
         self.block_database = Database(self.node_directory + "/multichain.db")
         self.log = open(self.node_directory + "/log.txt", 'w')
 
+        if walker_type == 'state-less undirected':
+            self.walk_function = self.walk_stateless_undirected
+        elif walker_type == 'state-less directed':
+            self.walk_function = self.walk_stateless_directed
+        elif walker_type == 'state-full undirected':
+            self.walk_function = self.walk_statefull_undirected
+        elif walker_type == 'state-full directed':
+            self.walk_function = self.walk_statefull_directed
+        elif walker_type is None:
+            self.walk_function = None
+        else:
+            raise ValueError, 'Invalid walker type' + str(walker_type)
 
     def receive_message(self, sender, message):
         message['function'](*message['arguments'])
@@ -48,10 +59,22 @@ class Node:
                        str(self.block_database.get_number_of_blocks_in_db()) + " blocks\n")
 
     def take_walk_step(self):
+        self.walk_function()
+        self.simulation.add_event(5000, self.take_walk_step)
+
+    def walk_stateless_undirected(self):
         if self.live_edges:
             peer = random.choice(self.live_edges)
             self.send_introduction_request(peer)
-        self.simulation.add_event(5000, self.take_walk_step)
+
+    def walk_stateless_directed(self):
+        raise NotImplementedError
+
+    def walk_statefull_undirected(self):
+        raise NotImplementedError
+
+    def walk_statefull_directed(self):
+        raise NotImplementedError
 
     def send_introduction_request(self, target):
         message = dict()
@@ -105,7 +128,3 @@ class Node:
     def log_data(self, datafile):
         with open(datafile, 'a') as f:
             f.write(str(self.block_database.get_number_of_blocks_in_db()) + " ")
-
-
-
-
