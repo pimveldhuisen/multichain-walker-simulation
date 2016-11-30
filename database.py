@@ -54,19 +54,33 @@ CREATE TABLE IF NOT EXISTS multi_chain(
 
 
 class Database:
-    def __init__(self, dbpath):
+    def __init__(self, dbpath, block_limit=None):
         self.dbpath = dbpath
         self.connection = Connection(dbpath)
         self.cursor = self.connection.cursor()
         self.cursor.executescript(schema)
         assert self.cursor is not None, "Database.close() has been called or Database.open() has not been called"
         assert self.connection is not None, "Database.close() has been called or Database.open() has not been called"
+        self.time_limit = self._set_block_limit(block_limit)
+
+    def _set_block_limit(self, block_limit):
+        if block_limit:
+            assert type(block_limit) is int
+            assert block_limit > 0
+            time_limit_query = u"SELECT MAX(insert_time) FROM " \
+                               u"(SELECT insert_time FROM multi_chain ORDER BY insert_time LIMIT ?)"
+            return self.cursor.execute(time_limit_query, [str(block_limit)]).fetchone()
+        else:
+            # If no time limit is to be set, we set the End of Unix Time as the limit
+            time_limit_query = u"SELECT datetime(2147483647, 'unixepoch')"
+            return self.cursor.execute(time_limit_query).fetchone()
 
     def get_identities(self):
         db_query = u"SELECT key " \
-                   u"FROM (SELECT public_key_requester AS key FROM multi_chain " \
-                   u"UNION SELECT public_key_responder AS key FROM multi_chain)"
-        db_result = self.cursor.execute(db_query).fetchall()
+                   u"FROM (SELECT public_key_requester AS key FROM multi_chain WHERE insert_time <= ?" \
+                   u"UNION SELECT public_key_responder AS key FROM multi_chain WHERE insert_time <= ?)"
+        data = self.time_limit + self.time_limit
+        db_result = self.cursor.execute(db_query, data).fetchall()
         return db_result
 
     def get_blocks(self, public_key):
@@ -86,10 +100,11 @@ class Database:
                    u"UNION " \
                    u"SELECT *, sequence_number_responder AS sequence_number," \
                    u" public_key_responder AS public_key FROM `multi_chain`) " \
-                   u"WHERE public_key = ? " \
+                   u"WHERE public_key = ? AND " \
+                   u"insert_time <= ?" \
                    u"ORDER BY sequence_number ASC "
         try:
-            db_result = self.cursor.execute(db_query, public_key).fetchall()
+            db_result = self.cursor.execute(db_query, public_key + self.time_limit).fetchall()
         except Exception:
             print public_key
             raise Exception
@@ -120,8 +135,8 @@ class Database:
         self.cursor.connection.commit()
 
     def get_number_of_blocks_in_db(self):
-        db_query = u"SELECT COUNT(*) FROM multi_chain;"
-        db_result = self.cursor.execute(db_query).fetchone()
+        db_query = u"SELECT COUNT(*) FROM multi_chain WHERE insert_time <= ?;"
+        db_result = self.cursor.execute(db_query, self.time_limit).fetchone()
         return db_result[0]
 
 

@@ -11,6 +11,8 @@ parser.add_argument('-v', '--verbose', default=False, help='Enable verbose outpu
 walker_types = ['state-less undirected', 'state-less directed', 'state-full undirected', 'state-full directed']
 parser.add_argument('-w', '--walker', default='state-less undirected', help='The type of walker used',
                     choices=walker_types)
+parser.add_argument('-b', '--block_limit', default=None, help='The number of blocks to be used for the simulation,'
+                                                              ' starting from the oldest blocks', type=int)
 args = parser.parse_args()
 
-Simulation(args.time, args.file, args.verbose, args.walker).start()
+Simulation(args.time, args.file, args.verbose, args.walker, args.block_limit).start()
