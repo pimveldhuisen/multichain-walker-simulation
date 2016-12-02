@@ -1,16 +1,18 @@
 from database import Database
 from node import Node
 import random
+import os
 
 
 class Simulation:
-    def __init__(self, max_time, log_file, verbose, walker_type, block_limit):
+    def __init__(self, max_time, log_dir, verbose, walker_type, block_limit):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
         self.event_queue = []
         self.time = 0
-        self.log_file = log_file
+        self.block_file = os.path.join(log_dir, 'blocks.dat')
+        self.load_balance_file = os.path.join(log_dir, 'load.dat')
         self.verbose = verbose
         self.walker_type = walker_type
         self.block_limit = block_limit
@@ -58,19 +60,26 @@ class Simulation:
                 event[1](*event[2:])
             else:
                 print "Time limit reached"
-                return
+                break
 
-        print "No more events"
+        if not self.event_queue:
+            print "No more events"
+        self.final_log_data()
         return
 
     def log_data(self):
-        with open(self.log_file, 'a') as f:
+        with open(self.block_file, 'a') as f:
             f.write(str(self.time) + " ")
         for node in self.nodes:
             if node.public_key is not 0:
-                node.log_data(self.log_file)
-        with open(self.log_file, 'a') as f:
+                node.log_data(self.block_file)
+        with open(self.block_file, 'a') as f:
             f.write("\n")
+
+    def final_log_data(self):
+        for node in self.nodes:
+            if node.public_key is not 0:
+                node.final_log_data(self.load_balance_file)
 
     def send_message(self, sender, target, message):
         self.add_event(Simulation.connection_delay(), target.receive_message, [sender, message])

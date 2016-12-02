@@ -38,6 +38,8 @@ class Node:
         else:
             raise ValueError, 'Invalid walker type' + str(walker_type)
 
+        self.number_of_requests_received = 0
+
     def receive_message(self, sender, message):
         message['function'](*message['arguments'])
 
@@ -125,6 +127,7 @@ class Node:
         self.send_message(target, message)
 
     def receive_crawl_request(self, sender):
+        self.number_of_requests_received += 1
         if self.public_key is not 0:
             self.send_crawl_response(sender)
 
@@ -141,3 +144,7 @@ class Node:
     def log_data(self, datafile):
         with open(datafile, 'a') as f:
             f.write(str(self.block_database.get_number_of_blocks_in_db()) + " ")
+
+    def final_log_data(self, datafile):
+        with open(datafile, 'a') as f:
+            f.write(str(self.number_of_requests_received) + "\n")
