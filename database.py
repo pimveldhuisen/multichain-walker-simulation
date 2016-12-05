@@ -1,3 +1,4 @@
+import base64
 from sqlite3 import Connection
 
 class DatabaseBlock:
@@ -81,7 +82,7 @@ class Database:
                    u"UNION SELECT public_key_responder AS key FROM multi_chain WHERE insert_time <= ?)"
         data = self.time_limit + self.time_limit
         db_result = self.cursor.execute(db_query, data).fetchall()
-        return db_result
+        return map(lambda x: x[0], db_result)
 
     def get_blocks(self, public_key):
         """
@@ -104,10 +105,10 @@ class Database:
                    u"insert_time <= ?" \
                    u"ORDER BY sequence_number ASC "
         try:
-            db_result = self.cursor.execute(db_query, public_key + self.time_limit).fetchall()
+            db_result = self.cursor.execute(db_query, (public_key,) + self.time_limit).fetchall()
         except Exception:
             print public_key
-            raise Exception
+            raise
         return [DatabaseBlock(db_item) for db_item in db_result]
 
     def add_blocks(self, blocks):
