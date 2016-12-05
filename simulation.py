@@ -17,21 +17,6 @@ class Simulation:
         self.walker_type = walker_type
         self.block_limit = block_limit
 
-    def add_event(self, delta_time, function, arguments=[]):
-        time = self.time + delta_time
-        event = [time, function] + arguments
-        self.event_queue.append(event)
-        self.event_queue.sort(key=lambda x: x[0])
-
-    @staticmethod
-    def connection_delay():
-        return random.randint(100, 500)
-
-    @staticmethod
-    def initialisation_delay():
-        return random.randint(0, 5000)
-
-    def start(self):
         print "Reading multichain database.."
         database = Database("multichain.db", self.block_limit)
         public_keys = database.get_identities()
@@ -47,6 +32,21 @@ class Simulation:
         for time in range(0, self.max_time, 60000):
             self.add_event(time, self.log_data)
 
+    def add_event(self, delta_time, function, arguments=[]):
+        time = self.time + delta_time
+        event = [time, function] + arguments
+        self.event_queue.append(event)
+        self.event_queue.sort(key=lambda x: x[0])
+
+    @staticmethod
+    def connection_delay():
+        return random.randint(100, 500)
+
+    @staticmethod
+    def initialisation_delay():
+        return random.randint(0, 5000)
+
+    def start(self):
         print "Starting simulation.."
         while self.event_queue:
             if self.time < self.max_time:
