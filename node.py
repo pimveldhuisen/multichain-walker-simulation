@@ -3,6 +3,7 @@ import os
 import base64
 
 from database import Database
+from scoring import get_ranking
 
 
 class Node:
@@ -74,7 +75,31 @@ class Node:
             self.send_introduction_request(peer)
 
     def walk_stateless_directed(self):
-        raise NotImplementedError
+        if self.live_edges:
+            alpha = 0.5
+            index = 0
+
+            # Order the live edges:
+            ranking = get_ranking(self.block_database, self.public_key)
+            if ranking:
+                ranked_live_edges = []
+                for live_edge in self.live_edges:
+                    try:
+                        rank = ranking.index(live_edge.public_key)
+                    except ValueError:
+                        break
+                    ranked_live_edges.append((live_edge, rank))
+                sorted(ranked_live_edges,key=lambda x: x[1])
+
+                if len(ranked_live_edges) > 0:
+                    # Select an edge from the ranked live edges:
+                    while random.random() < alpha:
+                            index = (index + 1) % len(ranked_live_edges)
+
+                    self.send_introduction_request(ranked_live_edges[index])
+                    return
+            # When we can't rank our live edges, walk undirected:
+            self.walk_stateless_undirected()
 
     def walk_statefull_undirected(self):
         if self.current_walk:
