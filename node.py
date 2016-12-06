@@ -87,16 +87,16 @@ class Node:
                     try:
                         rank = ranking.index(live_edge.public_key)
                     except ValueError:
-                        break
+                        continue
                     ranked_live_edges.append((live_edge, rank))
-                sorted(ranked_live_edges,key=lambda x: x[1])
+                sorted(ranked_live_edges, key=lambda x: x[1])
 
                 if len(ranked_live_edges) > 0:
                     # Select an edge from the ranked live edges:
                     while random.random() < alpha:
                             index = (index + 1) % len(ranked_live_edges)
 
-                    self.send_introduction_request(ranked_live_edges[index])
+                    self.send_introduction_request(ranked_live_edges[index][0])
                     return
             # When we can't rank our live edges, walk undirected:
             self.walk_stateless_undirected()

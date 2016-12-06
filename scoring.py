@@ -6,9 +6,9 @@ def get_ranking(database, pov_public_key):
     and is based on the database given in the first argument.
     The database must contain at least one block involving the point of view public key"""
     identities = database.get_identities()
-
     identities.remove(pov_public_key)
-    return identities.sort()
+    identities.sort(key=lambda x: str(x))
+    return identities
 
 
 def calculate_rank_difference(ranking_a, ranking_b):
