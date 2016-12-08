@@ -118,7 +118,7 @@ class Node:
                 ranked_live_edges = sorted(ranked_live_edges, key=lambda x: x[1])
                 if ranked_live_edges:
                     # Select an edge from the ranked live edges:
-                    while random.random() < alpha:
+                    while random.random() > alpha:
                         index = (index + 1) % len(ranked_live_edges)
 
                     return ranked_live_edges[index][0]
