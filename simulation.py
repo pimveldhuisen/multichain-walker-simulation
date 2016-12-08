@@ -3,6 +3,8 @@ from node import Node
 import random
 import os
 
+from scoring import get_ranking
+
 
 class Simulation:
     def __init__(self, max_time, log_dir, verbose, walker_type, block_limit):
@@ -13,6 +15,7 @@ class Simulation:
         self.time = 0
         self.block_file = os.path.join(log_dir, 'blocks.dat')
         self.load_balance_file = os.path.join(log_dir, 'load.dat')
+        self.ranking_deviation_file = os.path.join(log_dir, 'ranking.dat')
         self.verbose = verbose
         self.walker_type = walker_type
         self.block_limit = block_limit
@@ -28,6 +31,12 @@ class Simulation:
             self.nodes.append(node)
             self.add_event(Simulation.initialisation_delay(), node.take_walk_step)
             self.add_event(Simulation.initialisation_delay(), node.update_ranking)
+
+        print "Calculating rankings.."
+        # Here rankings are calculated based on the full database, not the individual databases of the nodes
+        self.rankings = {}
+        for public_key in public_keys:
+            self.rankings[str(public_key)] = get_ranking(database, public_key)
 
 
         print "Scheduling data gathering.."
@@ -74,14 +83,22 @@ class Simulation:
             f.write(str(self.time) + " ")
         for node in self.nodes:
             if node.public_key is not 0:
-                node.log_data(self.block_file)
+                node.log_blocks(self.block_file)
         with open(self.block_file, 'a') as f:
+            f.write("\n")
+
+        with open(self.ranking_deviation_file, 'a') as f:
+            f.write(str(self.time) + " ")
+        for node in self.nodes:
+            if node.public_key is not 0:
+                node.log_ranking(self.ranking_deviation_file)
+        with open(self.ranking_deviation_file, 'a') as f:
             f.write("\n")
 
     def final_log_data(self):
         for node in self.nodes:
             if node.public_key is not 0:
-                node.final_log_data(self.load_balance_file)
+                node.log_requests(self.load_balance_file)
 
     def send_message(self, sender, target, message):
         self.add_event(Simulation.connection_delay(), target.receive_message, [sender, message])

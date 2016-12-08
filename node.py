@@ -3,7 +3,7 @@ import os
 import base64
 
 from database import Database
-from scoring import get_ranking
+from scoring import get_ranking, calculate_rank_difference
 
 
 class Node:
@@ -40,11 +40,12 @@ class Node:
             self.current_walk = None
             self.walk_function = self.walk_statefull_directed
         elif walker_type is None:
+            self.directed = False
             self.walk_function = None
         else:
             raise ValueError, 'Invalid walker type' + str(walker_type)
 
-        self.ranking = None
+        self.ranking = []
         self.number_of_requests_received = 0
 
     def receive_message(self, sender, message):
@@ -101,7 +102,7 @@ class Node:
 
     def select_best_live_edge(self):
         if self.live_edges:
-            alpha = 0.5
+            alpha = 0.2
             index = 0
 
             # Order the live edges:
@@ -115,7 +116,7 @@ class Node:
                     ranked_live_edges.append((live_edge, rank))
 
                 ranked_live_edges = sorted(ranked_live_edges, key=lambda x: x[1])
-                if len(ranked_live_edges) > 0:
+                if ranked_live_edges:
                     # Select an edge from the ranked live edges:
                     while random.random() < alpha:
                         index = (index + 1) % len(ranked_live_edges)
@@ -184,10 +185,14 @@ class Node:
     def receive_crawl_response(self, blocks):
         self.add_blocks(blocks)
 
-    def log_data(self, datafile):
+    def log_blocks(self, datafile):
         with open(datafile, 'a') as f:
             f.write(str(self.block_database.get_number_of_blocks_in_db()) + " ")
 
-    def final_log_data(self, datafile):
+    def log_ranking(self, datafile):
+        with open(datafile, 'a') as f:
+            f.write(str(calculate_rank_difference(self.ranking, self.simulation.rankings[str(self.public_key)])) + " ")
+
+    def log_requests(self, datafile):
         with open(datafile, 'a') as f:
             f.write(str(self.number_of_requests_received) + "\n")
