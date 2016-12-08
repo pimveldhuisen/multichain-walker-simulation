@@ -6,6 +6,8 @@ import numpy
 
 
 class PimRank:
+    """ This class is used for the computation of the reputation of nodes based on PimRank,
+     a variation on PageRank developed by Pim Otte"""
 
     def __init__(self, graph, personalization, weight='contribution'):
         self.graph = graph

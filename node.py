@@ -11,6 +11,7 @@ class Node:
     NAT_TIMEOUT_WITH_MARGIN = 57500     # Maximum Time after puncturing a NAT at which we assume
     # a message can still reach the target before the hole closes (ms)
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
+    RANK_STEP_TIME = 60000  # Interval at which we recalculate the scores of our peers (ms)
 
     def __init__(self, public_key, simulation, walker_type=None):
         self.public_key = public_key
@@ -39,6 +40,7 @@ class Node:
         else:
             raise ValueError, 'Invalid walker type' + str(walker_type)
 
+        self.ranking = None
         self.number_of_requests_received = 0
 
     def receive_message(self, sender, message):
@@ -67,7 +69,7 @@ class Node:
 
     def take_walk_step(self):
         self.walk_function()
-        self.simulation.add_event(5000, self.take_walk_step)
+        self.simulation.add_event(self.WALK_STEP_TIME, self.take_walk_step)
 
     def walk_stateless_undirected(self):
         if self.live_edges:
@@ -80,17 +82,16 @@ class Node:
             index = 0
 
             # Order the live edges:
-            ranking = get_ranking(self.block_database, self.public_key)
-            if ranking:
+            if self.ranking:
                 ranked_live_edges = []
                 for live_edge in self.live_edges:
                     try:
-                        rank = ranking.index(live_edge.public_key)
+                        rank = self.ranking.index(str(live_edge.public_key))
                     except ValueError:
                         continue
                     ranked_live_edges.append((live_edge, rank))
-                sorted(ranked_live_edges, key=lambda x: x[1])
 
+                ranked_live_edges = sorted(ranked_live_edges, key=lambda x: x[1])
                 if len(ranked_live_edges) > 0:
                     # Select an edge from the ranked live edges:
                     while random.random() < alpha:
@@ -115,6 +116,10 @@ class Node:
 
     def walk_statefull_directed(self):
         raise NotImplementedError
+
+    def update_ranking(self):
+        self.ranking = get_ranking(self.block_database, self.public_key)
+        self.simulation.add_event(self.RANK_STEP_TIME, self.update_ranking)
 
     def send_introduction_request(self, target):
         message = dict()

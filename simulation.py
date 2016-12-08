@@ -27,6 +27,8 @@ class Simulation:
             node.send_identity(self.bootstrap)
             self.nodes.append(node)
             self.add_event(Simulation.initialisation_delay(), node.take_walk_step)
+            self.add_event(Simulation.initialisation_delay(), node.update_ranking)
+
 
         print "Scheduling data gathering.."
         for time in range(0, self.max_time, 60000):
