@@ -24,14 +24,18 @@ class Node:
         self.log = open(self.node_directory + "/log.txt", 'w')
 
         if walker_type == 'state-less undirected':
+            self.directed = False
             self.walk_function = self.walk_stateless_undirected
         elif walker_type == 'state-less directed':
+            self.directed = True
             self.walk_function = self.walk_stateless_directed
         elif walker_type == 'state-full undirected':
+            self.directed = False
             self.teleport_probability = 0.5
             self.current_walk = None
             self.walk_function = self.walk_statefull_undirected
         elif walker_type == 'state-full directed':
+            self.directed = True
             self.teleport_probability = 0.5
             self.current_walk = None
             self.walk_function = self.walk_statefull_directed
@@ -77,6 +81,25 @@ class Node:
             self.send_introduction_request(peer)
 
     def walk_stateless_directed(self):
+            peer = self.select_best_live_edge()
+            self.send_introduction_request(peer)
+
+    def walk_statefull_undirected(self):
+        if self.current_walk:
+            if random.random() <= self.teleport_probability:
+                self.current_walk = random.choice(self.live_edges)
+            else:
+                self.current_walk = self.live_edges[-1]
+        else:
+            # Start walking
+            self.current_walk = random.choice(self.live_edges)
+
+        self.send_introduction_request(self.current_walk)
+
+    def walk_statefull_directed(self):
+        raise NotImplementedError
+
+    def select_best_live_edge(self):
         if self.live_edges:
             alpha = 0.5
             index = 0
@@ -95,27 +118,15 @@ class Node:
                 if len(ranked_live_edges) > 0:
                     # Select an edge from the ranked live edges:
                     while random.random() < alpha:
-                            index = (index + 1) % len(ranked_live_edges)
+                        index = (index + 1) % len(ranked_live_edges)
 
-                    self.send_introduction_request(ranked_live_edges[index][0])
-                    return
-            # When we can't rank our live edges, walk undirected:
-            self.walk_stateless_undirected()
+                    return ranked_live_edges[index][0]
+            # It seems we can't rank our edges, so we just return a random one
+            return random.choice(self.live_edges)
 
-    def walk_statefull_undirected(self):
-        if self.current_walk:
-            if random.random() <= self.teleport_probability:
-                self.current_walk = random.choice(self.live_edges)
-            else:
-                self.current_walk = self.live_edges[-1]
         else:
-            # Start walking
-            self.current_walk = random.choice(self.live_edges)
-
-        self.send_introduction_request(self.current_walk)
-
-    def walk_statefull_directed(self):
-        raise NotImplementedError
+            print "I have no live edges"
+            return None
 
     def update_ranking(self):
         self.ranking = get_ranking(self.block_database, self.public_key)
@@ -133,8 +144,10 @@ class Node:
 
     def send_introduction_response(self, target):
         if self.live_edges:
-            peer = random.choice(self.live_edges)
-            #TODO: while peer eligble to walk
+            if self.directed:
+                peer = self.select_best_live_edge()
+            else:
+                peer = random.choice(self.live_edges)
             message = dict()
             message['function'] = target.receive_introduction_response
             message['arguments'] = [peer]
