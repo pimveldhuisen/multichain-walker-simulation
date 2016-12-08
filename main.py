@@ -13,6 +13,8 @@ parser.add_argument('-w', '--walker', default='state-less undirected', help='The
                     choices=walker_types)
 parser.add_argument('-b', '--block_limit', default=None, help='The number of blocks to be used for the simulation,'
                                                               ' starting from the oldest blocks', type=int)
+parser.add_argument('-a', '--alpha', default=0.1, help='The alpha factor used for the directed walking algorithm',
+                    type=int)
 args = parser.parse_args()
 
-Simulation(args.time, args.dir, args.verbose, args.walker, args.block_limit).start()
+Simulation(args.time, args.dir, args.verbose, args.walker, args.block_limit, args.alpha).start()

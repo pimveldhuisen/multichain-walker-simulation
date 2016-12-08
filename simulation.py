@@ -7,7 +7,7 @@ from scoring import get_ranking
 
 
 class Simulation:
-    def __init__(self, max_time, log_dir, verbose, walker_type, block_limit):
+    def __init__(self, max_time, log_dir, verbose, walker_type, block_limit, alpha):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
@@ -19,12 +19,13 @@ class Simulation:
         self.verbose = verbose
         self.walker_type = walker_type
         self.block_limit = block_limit
+        self.alpha = alpha
 
         print "Reading multichain database.."
         database = Database("multichain.db", self.block_limit)
         public_keys = database.get_identities()
         for public_key in public_keys:
-            node = Node(public_key, self, self.walker_type)
+            node = Node(public_key, self, self.walker_type, self.alpha)
             node.add_blocks(database.get_blocks(public_key))
             node.live_edges.append(self.bootstrap)
             node.send_identity(self.bootstrap)

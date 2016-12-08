@@ -13,7 +13,7 @@ class Node:
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
     RANK_STEP_TIME = 60000  # Interval at which we recalculate the scores of our peers (ms)
 
-    def __init__(self, public_key, simulation, walker_type=None):
+    def __init__(self, public_key, simulation, walker_type=None, alpha=0.1):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -47,6 +47,7 @@ class Node:
 
         self.ranking = []
         self.number_of_requests_received = 0
+        self.alpha = alpha
 
     def receive_message(self, sender, message):
         message['function'](*message['arguments'])
@@ -102,7 +103,6 @@ class Node:
 
     def select_best_live_edge(self):
         if self.live_edges:
-            alpha = 0.2
             index = 0
 
             # Order the live edges:
@@ -118,7 +118,7 @@ class Node:
                 ranked_live_edges = sorted(ranked_live_edges, key=lambda x: x[1])
                 if ranked_live_edges:
                     # Select an edge from the ranked live edges:
-                    while random.random() > alpha:
+                    while random.random() > self.alpha:
                         index = (index + 1) % len(ranked_live_edges)
 
                     return ranked_live_edges[index][0]
