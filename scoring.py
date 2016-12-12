@@ -22,9 +22,12 @@ def get_ranking(database, pov_public_key):
         raise
 
     pimrank_spread = pimrank.pimrank.PimRank(ordered_graph, personalisation).compute()
-
     pimrank_ordered = sorted(pimrank_spread, key=pimrank_spread.__getitem__, reverse=True)
-    return pimrank_ordered
+    # The function returns a dictionary with a tuple of the Reputation score and the rank within the list
+    pimranking = {}
+    for key in pimrank_spread:
+        pimranking[key] = (pimrank_spread[key], pimrank_ordered.index(key))
+    return pimranking
 
 
 def mock_get_ranking(database, pov_public_key):
@@ -34,18 +37,31 @@ def mock_get_ranking(database, pov_public_key):
     return identities
 
 
-def calculate_rank_difference(ranking_a, ranking_b):
-    """"""
-    avg_rank_difference = 0
-    for public_key in ranking_a + ranking_b:
-        try:
-            rank_a = float(ranking_a.index(public_key))/len(ranking_a)
-        except ValueError:
-            rank_a = 0.5
-        try:
-            rank_b = float(ranking_b.index(public_key))/len(ranking_b)
-        except ValueError:
-            rank_b = 0.5
-        rank_difference = rank_a - rank_b
-        avg_rank_difference += rank_difference/len(ranking_a + ranking_b)
-    return avg_rank_difference
+def calculate_ranking_similarity(ranking_subset, ranking):
+    """ Calculate the ranking similarity between two lists of ranked peers,
+    based on the definition in "Exploiting Graph Properties for Decentralized
+    Reputation Networks" by Dimitra Gkorou, available at:
+    http://repository.tudelft.nl/islandora/object/uuid:0fc40431-61ce-4bf6-b028-37c316e3e6b7
+    (page 95)"""
+    if not (ranking and ranking_subset):
+        return 0
+    r_w = sorted(ranking_subset, key=lambda x: ranking[x][1], reverse=True)
+
+    # D is a normalisation factor
+    D = 0
+    for public_key in ranking_subset:
+        score, rank = ranking[public_key][0], ranking[public_key][1]
+        inverse_rank = r_w.index(public_key)
+
+        D += score * (rank - inverse_rank) ** 2
+
+    difference = 0
+    for public_key in ranking_subset:
+        score, rank = ranking[public_key][0], ranking[public_key][1]
+        subset_rank = ranking_subset[public_key][1]
+        difference += score * (rank - subset_rank) ** 2
+
+    if D == 0:
+        print "Ranking Similarity Edge case: normalisation factor is 0 "
+        return 0.5
+    return 1-difference/float(D)

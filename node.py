@@ -3,7 +3,7 @@ import os
 import base64
 
 from database import Database
-from scoring import get_ranking, calculate_rank_difference
+from scoring import get_ranking, calculate_ranking_similarity
 
 
 class Node:
@@ -45,7 +45,7 @@ class Node:
         else:
             raise ValueError, 'Invalid walker type' + str(walker_type)
 
-        self.ranking = []
+        self.ranking = {}
         self.number_of_requests_received = 0
         self.alpha = alpha
 
@@ -110,7 +110,7 @@ class Node:
                 ranked_live_edges = []
                 for live_edge in self.live_edges:
                     try:
-                        rank = self.ranking.index(str(live_edge.public_key))
+                        rank = self.ranking[str(live_edge.public_key)][1]
                     except ValueError:
                         continue
                     ranked_live_edges.append((live_edge, rank))
@@ -191,7 +191,7 @@ class Node:
 
     def log_ranking(self, datafile):
         with open(datafile, 'a') as f:
-            f.write(str(calculate_rank_difference(self.ranking, self.simulation.rankings[str(self.public_key)])) + " ")
+            f.write(str(calculate_ranking_similarity(self.ranking, self.simulation.rankings[str(self.public_key)])) + " ")
 
     def log_requests(self, datafile):
         with open(datafile, 'a') as f:
