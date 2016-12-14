@@ -111,7 +111,7 @@ class Node:
                 for live_edge in self.live_edges:
                     try:
                         rank = self.ranking[str(live_edge.public_key)][1]
-                    except ValueError:
+                    except KeyError:
                         continue
                     ranked_live_edges.append((live_edge, rank))
 
@@ -191,7 +191,8 @@ class Node:
 
     def log_ranking(self, datafile):
         with open(datafile, 'a') as f:
-            f.write(str(calculate_ranking_similarity(self.ranking, self.simulation.rankings[str(self.public_key)])) + " ")
+            similarity = calculate_ranking_similarity(self.ranking, self.simulation.rankings[str(self.public_key)])
+            f.write(str(similarity) + " ")
 
     def log_requests(self, datafile):
         with open(datafile, 'a') as f:
