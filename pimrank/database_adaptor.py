@@ -24,9 +24,10 @@ class DatabaseAdaptor:
                    u"UNION " \
                    u"SELECT *, sequence_number_responder AS sequence_number," \
                    u" public_key_responder AS public_key FROM `multi_chain`) " \
+                   u"WHERE insert_time <= ? " \
 
 
-        db_result = self.database.cursor.execute(db_query).fetchall()
+        db_result = self.database.cursor.execute(db_query, self.database.time_limit).fetchall()
         string_results = []
         for db_item in db_result:
             string_results.append(map(lambda x: str(x), db_item))
