@@ -7,7 +7,7 @@ from scoring import get_ranking
 
 
 class Simulation:
-    def __init__(self, max_time, log_dir, verbose, walker_type, block_limit, alpha):
+    def __init__(self, max_time, log_dir, verbose, persistent_walking, directed_walking, block_limit, alpha):
         self.max_time = max_time
         self.bootstrap = Node(0, self)
         self.nodes = []
@@ -17,7 +17,8 @@ class Simulation:
         self.load_balance_file = os.path.join(log_dir, 'load.dat')
         self.ranking_deviation_file = os.path.join(log_dir, 'ranking.dat')
         self.verbose = verbose
-        self.walker_type = walker_type
+        self.persistent_walking = persistent_walking
+        self.directed_walking = directed_walking
         self.block_limit = block_limit
         self.alpha = alpha
 
@@ -25,7 +26,7 @@ class Simulation:
         database = Database("multichain.db", self.block_limit)
         public_keys = database.get_identities()
         for public_key in public_keys:
-            node = Node(public_key, self, self.walker_type, self.alpha)
+            node = Node(public_key, self, self.persistent_walking, self.directed_walking, self.alpha)
             node.add_blocks(database.get_blocks(public_key))
             node.receive_identity(self.bootstrap)
             node.send_identity(self.bootstrap)

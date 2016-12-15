@@ -13,7 +13,7 @@ class Node:
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
     RANK_STEP_TIME = 60000  # Interval at which we recalculate the scores of our peers (ms)
 
-    def __init__(self, public_key, simulation, walker_type=None, alpha=0.1):
+    def __init__(self, public_key, simulation, persistent_walking=False, directed_walking=False, alpha=0.1):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -23,27 +23,21 @@ class Node:
         self.block_database = Database(self.node_directory + "/multichain.db")
         self.log = open(self.node_directory + "/log.txt", 'w')
 
-        if walker_type == 'state-less undirected':
-            self.directed = False
-            self.walk_function = self.walk_stateless_undirected
-        elif walker_type == 'state-less directed':
-            self.directed = True
-            self.walk_function = self.walk_stateless_directed
-        elif walker_type == 'state-full undirected':
-            self.directed = False
+        self.directed_walking = directed_walking
+        self.persistent_walking = persistent_walking
+
+        if self.persistent_walking:
             self.teleport_probability = 0.5
             self.current_walk = None
-            self.walk_function = self.walk_statefull_undirected
-        elif walker_type == 'state-full directed':
-            self.directed = True
-            self.teleport_probability = 0.5
-            self.current_walk = None
-            self.walk_function = self.walk_statefull_directed
-        elif walker_type is None:
-            self.directed = False
-            self.walk_function = None
+            if self.directed_walking:
+                self.walk_function = self.walk_statefull_directed
+            else:
+                self.walk_function = self.walk_statefull_undirected
         else:
-            raise ValueError, 'Invalid walker type' + str(walker_type)
+            if self.directed_walking:
+                self.walk_function = self.walk_stateless_directed
+            else:
+                self.walk_function = self.walk_stateless_undirected
 
         self.ranking = {}
         self.number_of_requests_received = 0
@@ -153,7 +147,7 @@ class Node:
             else:
                 peer = None
                 while peer is None or peer == target:
-                    if self.directed:
+                    if self.directed_walking:
                         peer = self.select_best_live_edge()
                     else:
                         peer = random.choice(self.live_edges)
