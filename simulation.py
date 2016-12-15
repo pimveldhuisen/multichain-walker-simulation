@@ -27,7 +27,7 @@ class Simulation:
         for public_key in public_keys:
             node = Node(public_key, self, self.walker_type, self.alpha)
             node.add_blocks(database.get_blocks(public_key))
-            node.live_edges.append(self.bootstrap)
+            node.receive_identity(self.bootstrap)
             node.send_identity(self.bootstrap)
             self.nodes.append(node)
             self.add_event(Simulation.initialisation_delay(), node.take_walk_step)

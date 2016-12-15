@@ -56,15 +56,18 @@ class Node:
         self.simulation.send_message(self, target, message)
 
     def add_live_edge(self, peer):
-        self.live_edges.append(peer)
-        self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
+        if peer not in self.live_edges:
+            self.live_edges.append(peer)
+            self.simulation.add_event(self.NAT_TIMEOUT_WITH_MARGIN, self.live_edge_timeout, [peer])
 
+    # Only used for bootstrapping
     def send_identity(self, target):
         message = dict()
         message['function'] = target.receive_identity
         message['arguments'] = [self]
         self.send_message(target, message)
 
+    # Only used for bootstrapping
     def receive_identity(self, sender):
         self.live_edges.append(sender)
 
@@ -162,8 +165,7 @@ class Node:
             print "I have no live edges"
 
     def receive_introduction_response(self, peer):
-        self.live_edges.append(peer)
-        self.simulation.add_event(57500, self.live_edge_timeout, [peer])
+        self.add_live_edge(peer)
         self.send_crawl_request(peer)
 
     def live_edge_timeout(self, peer):
