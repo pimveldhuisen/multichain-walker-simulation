@@ -145,14 +145,19 @@ class Node:
 
     def send_introduction_response(self, target):
         if self.live_edges:
-            if self.directed:
-                peer = self.select_best_live_edge()
+            if len(self.live_edges) == 1 and self.live_edges[0] == target:
+                print "Can't introduce: I know only this peer"
             else:
-                peer = random.choice(self.live_edges)
-            message = dict()
-            message['function'] = target.receive_introduction_response
-            message['arguments'] = [peer]
-            self.send_message(target, message)
+                peer = None
+                while peer is None or peer == target:
+                    if self.directed:
+                        peer = self.select_best_live_edge()
+                    else:
+                        peer = random.choice(self.live_edges)
+                message = dict()
+                message['function'] = target.receive_introduction_response
+                message['arguments'] = [peer]
+                self.send_message(target, message)
         else:
             print "I have no live edges"
 
