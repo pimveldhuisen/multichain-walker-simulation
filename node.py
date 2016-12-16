@@ -98,7 +98,7 @@ class Node:
     def walk_statefull_directed(self):
         raise NotImplementedError
 
-    def select_best_live_edge(self):
+    def select_best_live_edge(self, exclude_peer=None):
         if self.live_edges:
             index = 0
 
@@ -106,6 +106,8 @@ class Node:
             if self.ranking:
                 ranked_live_edges = []
                 for live_edge in self.live_edges:
+                    if live_edge is exclude_peer:
+                        continue
                     try:
                         rank = self.ranking[str(live_edge.public_key)][1]
                     except KeyError:
@@ -145,11 +147,11 @@ class Node:
             if len(self.live_edges) == 1 and self.live_edges[0] == target:
                 print "Can't introduce: I know only this peer"
             else:
-                peer = None
-                while peer is None or peer == target:
-                    if self.directed_walking:
-                        peer = self.select_best_live_edge()
-                    else:
+                if self.directed_walking:
+                    peer = self.select_best_live_edge(exclude_peer=target)
+                else:
+                    peer = None
+                    while peer is None or peer == target:
                         peer = random.choice(self.live_edges)
                 message = dict()
                 message['function'] = target.receive_introduction_response
