@@ -32,7 +32,7 @@ class Simulation:
             node.send_identity(self.bootstrap)
             self.nodes.append(node)
             self.add_event(Simulation.initialisation_delay(), node.take_walk_step)
-            self.add_event(Simulation.initialisation_delay(), node.update_ranking)
+            self.add_event(0, node.update_ranking)
 
         print "Calculating rankings.."
         # Here rankings are calculated based on the full database, not the individual databases of the nodes
