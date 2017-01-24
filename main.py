@@ -13,7 +13,7 @@ parser.add_argument('-dw', '--directed_walking', default=False, help='Toggle dir
 parser.add_argument('-b', '--block_limit', default=None, help='The number of blocks to be used for the simulation,'
                                                               ' starting from the oldest blocks', type=int)
 parser.add_argument('-a', '--alpha', default=0.1, help='The alpha factor used for the directed walking algorithm',
-                    type=int)
+                    type=float)
 args = parser.parse_args()
 
 Simulation(args.time, args.dir, args.verbose, args.persistent_walking, args.directed_walking, args.block_limit,
