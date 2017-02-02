@@ -42,8 +42,8 @@ class Simulation:
 
 
         print "Scheduling data gathering.."
-        for time in range(0, self.max_time, 60000):
-            self.add_event(time, self.log_data)
+        self.log_data_times = range(self.max_time, -60000, -60000)
+        print self.log_data_times
 
     def add_event(self, delta_time, function, arguments=[]):
         time = self.time + delta_time
@@ -65,6 +65,12 @@ class Simulation:
             if self.time < self.max_time:
                 event = self.event_queue.pop(0)
                 self.time = event[0]
+                # If the next event is later than the next scheduled logging moment, log_data first.
+                # This guarantees that if data is logged at time t, all event with a time <= t have been executed,
+                # while no event with time > t has.
+                if self.time > self.log_data_times[-1]:
+                    self.log_data_times.pop()
+                    self.log_data()
                 if self.verbose:
                     print "Time: " + str(self.time) + " | " + str(event[1:])
                 else:
