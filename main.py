@@ -14,7 +14,9 @@ parser.add_argument('-b', '--block_limit', default=None, help='The number of blo
                                                               ' starting from the oldest blocks', type=int)
 parser.add_argument('-a', '--alpha', default=0.1, help='The alpha factor used for the directed walking algorithm',
                     type=float)
+parser.add_argument('-tp', '--teleport_probability', default=0.5,
+                    help='The teleport probability used in the persistent walking algorithm', type=float)
 args = parser.parse_args()
 
 Simulation(args.time, args.dir, args.verbose, args.persistent_walking, args.directed_walking, args.block_limit,
-           args.alpha).start()
+           args.alpha, args.teleport_probability).start()

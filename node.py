@@ -13,7 +13,8 @@ class Node:
     WALK_STEP_TIME = 5000   # Interval at which we do walk steps (ms)
     RANK_STEP_TIME = 60000  # Interval at which we recalculate the scores of our peers (ms)
 
-    def __init__(self, public_key, simulation, persistent_walking=False, directed_walking=False, alpha=0.1):
+    def __init__(self, public_key, simulation, persistent_walking=False, directed_walking=False, alpha=0.1,
+                 teleport_probability=0.5):
         self.public_key = public_key
         self.simulation = simulation
         self.live_edges = []
@@ -27,7 +28,7 @@ class Node:
         self.persistent_walking = persistent_walking
 
         if self.persistent_walking:
-            self.teleport_probability = 0.5
+            self.teleport_probability = teleport_probability
             self.current_walk = None
             if self.directed_walking:
                 self.walk_function = self.walk_statefull_directed
