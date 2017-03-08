@@ -10,6 +10,8 @@ timestamps = data[:, 0]
 values = data[:, 1:]
 averages = np.average(values, axis=1)
 
-plt.figure(figsize=(20,20))
+plt.figure(figsize=(20, 20))
 plt.boxplot(values.transpose(), showmeans=True, showfliers=False)
-plt.savefig('blocks.png', dpi=50)
+plt.xlabel('Time (minutes)')
+plt.ylabel('Number of blocks discovered')
+plt.savefig('blocks.png', dpi=100)
