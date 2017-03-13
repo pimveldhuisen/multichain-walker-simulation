@@ -23,6 +23,7 @@ class Simulation:
         self.block_limit = block_limit
         self.alpha = alpha
         self.teleport_probability = teleport_probability
+        self.last_progress_print = None
 
         print "Reading multichain database.."
         database = Database("multichain.db", self.block_limit)
@@ -79,8 +80,11 @@ class Simulation:
                 if self.verbose:
                     print "Time: " + str(self.time) + " | " + str(event[1:])
                 else:
-                    if self.time % 1000 == 0:
-                        print self.time
+                    if self.time % 1024 == 0:
+                        progress = self.time/float(self.max_time)*100
+                        if progress != self.last_progress_print:
+                            self.last_progress_print = progress
+                            print "%.2f %%" % progress
                 # Execute the event:
                 event[1](*event[2:])
             else:
