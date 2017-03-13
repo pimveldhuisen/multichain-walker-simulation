@@ -65,20 +65,23 @@ class Simulation:
     def start(self):
         print "Starting simulation.."
         while self.event_queue:
-            if self.time < self.max_time:
-                event = self.event_queue.pop(0)
-                self.time = event[0]
-                # If the next event is later than the next scheduled logging moment, log_data first.
-                # This guarantees that if data is logged at time t, all event with a time <= t have been executed,
-                # while no event with time > t has.
-                if self.time > self.log_data_times[-1]:
-                    self.log_data_times.pop()
-                    self.log_data()
+            # Peek at the next event
+            event = self.event_queue.pop(0)
+            self.time = event[0]
+            # If the next event is later than the next scheduled logging moment, log_data first.
+            # This guarantees that if data is logged at time t, all events with a time <= t have been executed,
+            # while no event with time > t has.
+            if self.time > self.log_data_times[-1]:
+                self.log_data_times.pop()
+                self.log_data()
+            # If the next event is within the time limit
+            if self.time <= self.max_time:
                 if self.verbose:
                     print "Time: " + str(self.time) + " | " + str(event[1:])
                 else:
                     if self.time % 1000 == 0:
                         print self.time
+                # Execute the event:
                 event[1](*event[2:])
             else:
                 print "Time limit reached"
